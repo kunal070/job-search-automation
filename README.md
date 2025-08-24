@@ -1,15 +1,21 @@
-A FastAPI-based job scanning service that finds software co-op/internship positions for Fall 2025.
-Installation
+# 💼 Job Scanner API  
 
-Install dependencies:
+A **FastAPI-based job scanning service** that helps you find **Software Co-op/Internship roles for Fall 2025**.  
+The API integrates with external job sources and can be used to power automated workflows (e.g., sending job alerts with n8n).  
 
-bashpip install fastapi uvicorn requests python-dotenv
+---
 
-Create .env file:
+## 🚀 Features
+- 🔍 Scan for the latest software jobs (Co-op/Internship)  
+- 📅 Track run IDs with timestamps  
+- 📡 REST API endpoints for health, scan, and root checks  
+- ✉️ Can be integrated with n8n for automated email alerts  
 
-envJSEARCH_API_KEY=your_rapidapi_key_here
-OPENROUTER_API_KEY=your_openrouter_api_key_here
+---
 
-Run the application:
+## ⚙️ Installation
 
-bashuvicorn api.index:app --reload
+### 1️⃣ Clone the repository
+```bash
+git clone https://github.com/kunal070/job-search-automation.git
+cd job-search-automation
