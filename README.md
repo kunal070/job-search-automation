@@ -9,5 +9,3 @@ It scans job listings, filters based on keywords, emails matches, and logs resul
 - Automated **email alerts** using Gmail via n8n
 - Daily scheduled scans
 - Local/remote job log tracking
-
-## 📂 Project Structure
