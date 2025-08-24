@@ -15,7 +15,9 @@ app = FastAPI()
 
 # Configuration
 JSEARCH_API_KEY = os.getenv("JSEARCH_API_KEY", "your_rapidapi_key_here")
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "your_openrouter_key_here")
 JSEARCH_URL = "https://jsearch.p.rapidapi.com/search"
+OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 JOBS_FILE = "jobs_seen.json"
 
 # Keywords for filtering
@@ -82,6 +84,66 @@ def cleanup_old_jobs(seen_jobs: Dict, days_threshold: int = 30):
         del seen_jobs["seen_jobs"][job_hash]
     
     return seen_jobs
+
+def analyze_job_with_claude(job: Dict) -> Dict:
+    """Analyze job using Claude 4.1 via OpenRouter"""
+    title = job.get("job_title", "Unknown Title")
+    company = job.get("employer_name", "Unknown Company")
+    description = job.get("job_description", "No description available")
+    
+    prompt = f"""
+    Analyze this software co-op/internship job and provide insights:
+    
+    Job Title: {title}
+    Company: {company}
+    Description: {description}
+    
+    Please provide:
+    1. A brief summary (2-3 sentences)
+    2. Key technical requirements/skills
+    3. Your recommendation for students (why apply/not apply)
+    4. Difficulty level (Entry/Mid/Senior)
+    
+    Keep response concise and practical for students.
+    """
+    
+    headers = {
+        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+        "Content-Type": "application/json"
+    }
+    
+    payload = {
+        "model": "anthropic/claude-3.5-sonnet",
+        "messages": [
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ],
+        "max_tokens": 500,
+        "temperature": 0.7
+    }
+    
+    try:
+        response = requests.post(OPENROUTER_URL, headers=headers, json=payload, timeout=15)
+        response.raise_for_status()
+        
+        data = response.json()
+        ai_response = data["choices"][0]["message"]["content"]
+        
+        return {
+            "summary": ai_response[:200] + "..." if len(ai_response) > 200 else ai_response,
+            "full_analysis": ai_response,
+            "analyzed_at": datetime.now().isoformat()
+        }
+    
+    except Exception as e:
+        print(f"Claude analysis failed: {e}")
+        return {
+            "summary": "AI analysis unavailable",
+            "full_analysis": f"Analysis failed: {str(e)}",
+            "analyzed_at": datetime.now().isoformat()
+        }
 
 def is_eligible_job(job: Dict) -> tuple[bool, str]:
     """Check if job is eligible based on description and title"""
@@ -210,13 +272,17 @@ def scan():
         is_eligible, reason = is_eligible_job(job)
         
         if is_eligible:
+            # Analyze job with Claude
+            ai_analysis = analyze_job_with_claude(job)
+            
             # Add to new jobs list
             job_info = {
                 "title": title,
                 "company": company,
                 "location": location if location else "Remote/Unknown",
                 "url": url,
-                "why_matched": reason
+                "why_matched": reason,
+                "ai_analysis": ai_analysis
             }
             new_jobs.append(job_info)
             
