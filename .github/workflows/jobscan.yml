@@ -1,0 +1,44 @@
+name: Job Scanner (4× daily)
+
+on:
+  schedule:
+    # Run every hour; we'll gate to local Toronto hours inside run_scan.py
+    - cron: "0 * * * *"
+  workflow_dispatch: {}   # lets you run it manually from the Actions tab
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env:
+      # Time-gating so it only runs at these local hours (Toronto)
+      GATE_TZ: America/Toronto
+      RUN_HOURS_LOCAL: "8,12,17,23"
+
+      # App configuration from repo secrets (set these in Settings → Secrets and variables → Actions)
+      JSEARCH_API_KEY: ${{ secrets.JSEARCH_API_KEY }}
+      SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
+      EMAIL_APP_PASSWORD: ${{ secrets.EMAIL_APP_PASSWORD }}
+      RECIPIENT_EMAILS: ${{ secrets.RECIPIENT_EMAILS }}
+
+      # Optional: tune your scanner without changing code
+      # REQUESTS_PER_MIN: "20"
+      # PAGES: "2"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run job scan (gated by local time)
+        run: python -m api.run_scan
