@@ -1,4 +1,3 @@
-
 # api/index.py
 from fastapi import FastAPI
 from datetime import datetime, timezone
@@ -21,12 +20,15 @@ load_dotenv()
 
 app = FastAPI()
 
+# ---- Render flag: keep your current behavior by default (true for local) ----
+ENABLE_SCHEDULER = os.getenv("ENABLE_SCHEDULER", "true").lower() == "true"
+
 # Configuration
 JSEARCH_API_KEY = os.getenv("JSEARCH_API_KEY", "your_rapidapi_key_here")
 JSEARCH_URL = "https://jsearch.p.rapidapi.com/search"
 JOBS_FILE = "jobs_seen.json"
 
-#email configuration
+# email configuration
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
 SENDER_EMAIL = os.getenv("SENDER_EMAIL", "your-email@gmail.com")
@@ -626,8 +628,11 @@ def start_scheduler():
 @app.on_event("startup")
 async def startup_event():
     """Initialize scheduler when FastAPI starts"""
-    start_scheduler()
-    print("🚀 Job scanner started with automatic scheduling")
+    if ENABLE_SCHEDULER:
+        start_scheduler()
+        print("🚀 Job scanner started with automatic scheduling")
+    else:
+        print("⏸️  In-process scheduler disabled (ENABLE_SCHEDULER=false)")
 
 @app.get("/")
 def root():
@@ -737,3 +742,9 @@ def force_scan():
     """Force an immediate scan (useful for testing)"""
     scan_jobs_automated()
     return {"message": "Forced scan completed"}
+
+# Convenience endpoint for Render (optional): directly trigger scan+email
+@app.get("/api/scan-and-email")
+def scan_and_email():
+    scan_jobs_automated()
+    return {"ok": True, "message": "Scan executed and email attempted"}
