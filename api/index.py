@@ -215,7 +215,7 @@ def search_all_jobs() -> List[Dict]:
         print(f"🔍 Searching: {query}")
         
         # Search multiple pages for each query
-        for page in range(1, 4):  # Search pages 1, 2, 3
+        for page in range(1, 2):  # Search pages 1, 2, 3
             jobs = search_jobs_by_query(query, page)
             if jobs:
                 all_jobs.extend(jobs)
