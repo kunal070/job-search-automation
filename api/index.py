@@ -455,6 +455,67 @@ def send_email(new_jobs: List[Dict], run_info: Dict):
             server.starttls()
             server.login(SENDER_EMAIL, SENDER_PASSWORD)
             text = msg.as_string()
+            # FIXED: Pass the list directly - sendmail() handles lists correctly
+            server.sendmail(SENDER_EMAIL, RECIPIENT_EMAILS, text)
+        
+        print(f"✅ Email sent successfully to {len(RECIPIENT_EMAILS)} recipients with {len(new_jobs)} job matches")
+        print(f"📧 Recipients: {', '.join(RECIPIENT_EMAILS)}")
+        
+    except Exception as e:
+        print(f"❌ Error sending email: {e}")
+        # Add more detailed error info
+        import traceback
+        traceback.print_exc()
+    """Send email notification with new job matches"""
+    if not new_jobs:
+        return
+    
+    try:
+        # Create message
+        msg = MIMEMultipart()
+        msg['From'] = SENDER_EMAIL
+        msg['To'] = ", ".join(RECIPIENT_EMAILS)  # Join emails with comma for display
+        msg['Subject'] = f"🚨 {len(new_jobs)} New Job Matches Found! - {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+        
+        # Create HTML body
+        html_body = f"""
+        <html>
+        <body>
+            <h2>🎯 New Job Opportunities Found!</h2>
+            <p><strong>Scan Time:</strong> {datetime.now().strftime('%Y-%m-%d at %H:%M')}</p>
+            <p><strong>New Matches:</strong> {len(new_jobs)}</p>
+            <p><strong>Total Jobs Scanned:</strong> {run_info.get('total_jobs_scanned', 'Unknown')}</p>
+            
+            <h3>📋 Job Matches:</h3>
+        """
+        
+        for i, job in enumerate(new_jobs, 1):
+            html_body += f"""
+            <div style="border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 5px;">
+                <h4 style="color: #2c3e50; margin: 0 0 10px 0;">{i}. {job['title']}</h4>
+                <p><strong>🏢 Company:</strong> {job['company']}</p>
+                <p><strong>📍 Location:</strong> {job['location']}</p>
+                <p><strong>✅ Why Matched:</strong> <em>{job['why_matched']}</em></p>
+                <p><strong>🔗 Apply:</strong> <a href="{job['url']}" target="_blank">View Job Posting</a></p>
+            </div>
+            """
+        
+        html_body += f"""
+            <p style="color: #7f8c8d; font-size: 12px; margin-top: 30px;">
+                This automated job alert was sent to {len(RECIPIENT_EMAILS)} recipient(s).<br>
+                Jobs are filtered for AI/Tech roles suitable for fresh graduates in Canada.
+            </p>
+        </body>
+        </html>
+        """
+        
+        msg.attach(MIMEText(html_body, 'html'))
+        
+        # Send email to all recipients
+        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+            server.starttls()
+            server.login(SENDER_EMAIL, SENDER_PASSWORD)
+            text = msg.as_string()
             # Pass individual emails in the list, not the list itself
             server.sendmail(SENDER_EMAIL, RECIPIENT_EMAILS, text)
         
