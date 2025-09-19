@@ -41,10 +41,10 @@ jobs:
       - name: Verify secrets loaded
         run: |
           python - <<'PY'
-import os
-for key in ("JSEARCH_API_KEY", "JOOBLE_API_KEY", "APP_ID", "APP_KEY"):
-    print(f"{key} present?", bool(os.getenv(key)))
-PY
+          import os
+          for key in ("JSEARCH_API_KEY", "JOOBLE_API_KEY", "APP_ID", "APP_KEY"):
+              print(f"{key} present?", bool(os.getenv(key)))
+          PY
 
       - name: Install deps
         run: |
