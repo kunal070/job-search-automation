@@ -10,6 +10,9 @@ jobs:
 
     env:
       JSEARCH_API_KEY: ${{ secrets.JSEARCH_API_KEY }}
+      JOOBLE_API_KEY: ${{ secrets.JOOBLE_API_KEY }}
+      APP_ID: ${{ secrets.APP_ID }}
+      APP_KEY: ${{ secrets.APP_KEY }}
       SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
       EMAIL_APP_PASSWORD: ${{ secrets.EMAIL_APP_PASSWORD }}
       RECIPIENT_EMAILS: ${{ secrets.RECIPIENT_EMAILS }}
@@ -22,6 +25,14 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+
+      - name: Verify secrets loaded
+        run: |
+          python - <<'PY'
+import os
+for key in ("JSEARCH_API_KEY", "JOOBLE_API_KEY", "APP_ID", "APP_KEY"):
+    print(f"{key} present?", bool(os.getenv(key)))
+PY
 
       - name: Install dependencies
         run: |
